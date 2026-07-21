@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contacto — Trama Estudio</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a href="index.html" class="brand">
+      <img src="Logo.png" alt="Manu y Dani Studio" class="brand-logo brand-logo--scaled">
+      <span class="visually-hidden">trama/estudio</span>
+    </a>
+    <nav class="paths" aria-label="Navegación principal">
+      <a href="index.html"><span class="seg">inicio</span></a>
+      <a href="metodologia.html"><span class="seg">metodologia</span></a>
+      <a href="proyectos.html"><span class="seg">proyectos</span></a>
+      <a href="contacto.html" aria-current="page"><span class="seg">contacto</span></a>
+    </nav>
+  </div>
+</header>
+
+<section class="blueprint" style="padding:70px 0 54px;">
+  <div class="wrap">
+    <p class="eyebrow">Contacto</p>
+    <h1 style="color:var(--cream); font-size:clamp(30px,4.6vw,48px); max-width:18ch; margin-top:16px;">Cuéntanos qué necesitas construir.</h1>
+    <p class="sub" style="max-width:52ch;">Respondemos en menos de dos días laborables con una primera valoración de alcance y plazos.</p>
+  </div>
+</section>
+
+<section class="paper">
+  <div class="wrap">
+    <div class="contact-grid">
+
+      <form id="contact-form" action="https://formspree.io/f/xpqgrjvz" method="POST" novalidate>
+        <div class="field">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" name="nombre" required autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="email">Correo electrónico</label>
+          <input type="email" id="email" name="email" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="tipo">Tipo de proyecto</label>
+          <select id="tipo" name="tipo">
+            <option>Sitio web corporativo</option>
+            <option>Tienda en línea</option>
+            <option>Aplicación web a medida</option>
+            <option>Mantenimiento de un sitio existente</option>
+            <option>Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="mensaje">Mensaje</label>
+          <textarea id="mensaje" name="mensaje" required placeholder="Describe brevemente el proyecto, plazos y presupuesto orientativo."></textarea>
+        </div>
+        <button type="submit" class="btn btn-solid">Enviar mensaje</button>
+        <p class="form-note" id="form-note" role="status"></p>
+      </form>
+
+      <div class="contact-info blueprint" style="padding:32px; border-radius:3px; align-self:start;">
+        <dl>
+          <div class="row">
+            <dt>Correo</dt>
+            <dd><a href="mailto:contacto@mdstudioweb.es">contacto@mdstudioweb.es</a></dd>
+          </div>
+          <div class="row">
+            <dt>Teléfono</dt>
+            <dd><a href="tel:+34695231697">+34 695 23 16 97</a></dd>
+            <dd><a href="tel:+34696843083">+34 696 84 30 83</a></dd>
+          </div>
+          <div class="row">
+            <dt>Ubicación</dt>
+            <dd>Mérida, Extremadura — trabajo en remoto</dd>
+          </div>
+          <div class="row">
+            <dt>Horario</dt>
+            <dd>Lunes a viernes, 9:00–18:00</dd>
+          </div>
+        </dl>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <p class="term">Estado: disponible para nuevos proyectos<span class="cursor"></span></p>
+    <small>MD Studio — Mérida, España</small>
+  </div>
+</footer>
+
+</body>
+</html>
