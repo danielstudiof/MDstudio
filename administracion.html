@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="Logo.png" type="image/png"><link rel="stylesheet" href="styles.css"><title>Administración — MD Studio</title>
+</head>
+<body>
+<header class="site"><div class="wrap"><a href="index.html" class="brand"><img src="Logo.png" alt="MD Studio" class="brand-logo brand-logo--scaled"></a><nav class="paths"><a href="index.html">sitio</a><a href="acceso.html" id="logout">cerrar sesión</a></nav></div></header>
+<main class="paper portal-admin"><div class="wrap">
+  <p class="eyebrow">Administración</p><h1>Asignación de espacios de cliente.</h1>
+  <p class="section-intro">Elige la página a la que llegará cada usuario tras iniciar sesión.</p>
+  <section class="admin-grid">
+    <form class="admin-panel" id="invite-form"><h2>Invitar cliente</h2>
+      <div class="field"><label for="invite-name">Nombre</label><input id="invite-name" required></div>
+      <div class="field"><label for="invite-email">Correo</label><input id="invite-email" type="email" required></div>
+      <div class="field"><label for="invite-destination">Página de destino</label><input id="invite-destination" value="mi-espacio.html" required><small>Puede ser una página interna o una URL completa.</small></div>
+      <button class="btn btn-solid" type="submit">Enviar invitación</button><p id="invite-message" class="form-note" role="status"></p>
+    </form>
+    <section class="admin-panel"><h2>Usuarios</h2><p id="users-message" class="form-note">Cargando usuarios…</p><div id="users-list" class="users-list"></div></section>
+  </section>
+</div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="portal.js"></script>
+<script>
+const usersList = document.querySelector('#users-list'); const usersMessage = document.querySelector('#users-message');
+function safe(value) { const element = document.createElement('span'); element.textContent = value || ''; return element.innerHTML; }
+async function loadUsers() {
+  const { data, error } = await mdPortal.client.from('profiles').select('id, display_name, email, role, destination_url').order('created_at', { ascending: false });
+  if (error) return mdPortal.message(usersMessage, error.message, true);
+  usersList.innerHTML = data.map(user => `<form class="user-row" data-id="${user.id}"><div><strong>${safe(user.display_name || 'Sin nombre')}</strong><span>${safe(user.email)}</span></div><input aria-label="Página de destino para ${safe(user.display_name || user.email)}" value="${safe(user.destination_url)}" ${user.role === 'admin' ? 'disabled' : ''}><button class="btn btn-outline on-paper" ${user.role === 'admin' ? 'hidden' : ''}>Guardar</button></form>`).join('');
+  mdPortal.message(usersMessage, data.length ? '' : 'Aún no hay usuarios.');
+}
+usersList.addEventListener('submit', async event => {
+  event.preventDefault(); const form = event.target; const destination_url = form.querySelector('input').value.trim();
+  const { error } = await mdPortal.client.from('profiles').update({ destination_url }).eq('id', form.dataset.id);
+  if (error) return mdPortal.message(usersMessage, error.message, true); mdPortal.message(usersMessage, 'Destino actualizado.');
+});
+document.querySelector('#invite-form').addEventListener('submit', async event => {
+  event.preventDefault(); const message = document.querySelector('#invite-message');
+  const { data: { session } } = await mdPortal.client.auth.getSession();
+  const response = await fetch(`${window.MD_SUPABASE_URL}/functions/v1/admin-invite`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ display_name: document.querySelector('#invite-name').value, email: document.querySelector('#invite-email').value, destination_url: document.querySelector('#invite-destination').value }) });
+  const result = await response.json(); if (!response.ok) return mdPortal.message(message, result.error || 'No se pudo enviar la invitación.', true);
+  event.target.reset(); mdPortal.message(message, 'Invitación enviada.'); loadUsers();
+});
+document.querySelector('#logout').addEventListener('click', event => { event.preventDefault(); mdPortal.signOut(); });
+(async () => { try { const user = await mdPortal.requireUser(); if (!user) return; const profile = await mdPortal.profile(user.id); if (profile.role !== 'admin') return window.location.replace(profile.destination_url); loadUsers(); } catch (error) { mdPortal.message(usersMessage, error.message, true); } })();
+</script>
+</body></html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#152C46">
+<link rel="icon" href="Logo.png" type="image/png">
+<link rel="stylesheet" href="styles.css">
+<title>Acceso privado — MD Studio</title>
+</head>
+<body>
+<header class="site"><div class="wrap">
+  <a href="index.html" class="brand"><img src="Logo.png" alt="MD Studio" class="brand-logo brand-logo--scaled"></a>
+  <nav class="paths" aria-label="Navegación principal"><a href="index.html">volver al sitio</a></nav>
+</div></header>
+
+<main class="portal-page blueprint">
+  <div class="wrap portal-layout">
+    <section>
+      <p class="eyebrow">Área privada</p>
+      <h1>Tu proyecto, en un solo lugar.</h1>
+      <p class="sub">Accede al espacio que MD Studio ha preparado para ti.</p>
+    </section>
+    <section class="portal-card" aria-labelledby="access-title">
+      <h2 id="access-title">Iniciar sesión</h2>
+      <form id="login-form">
+        <div class="field"><label for="login-email">Correo electrónico</label><input id="login-email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="login-password">Contraseña</label><input id="login-password" type="password" autocomplete="current-password" required></div>
+        <button class="btn btn-solid" type="submit">Entrar</button>
+      </form>
+      <p id="login-message" class="form-note" role="status"></p>
+      <p class="portal-switch">¿Aún no tienes cuenta? <button type="button" class="text-button" id="show-register">Crear cuenta</button></p>
+
+      <form id="register-form" hidden>
+        <h2>Crear cuenta</h2>
+        <div class="field"><label for="register-name">Nombre</label><input id="register-name" autocomplete="name" required></div>
+        <div class="field"><label for="register-email">Correo electrónico</label><input id="register-email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="register-password">Contraseña</label><input id="register-password" type="password" autocomplete="new-password" minlength="8" required></div>
+        <button class="btn btn-solid" type="submit">Solicitar acceso</button>
+        <button class="text-button" type="button" id="show-login">Volver a iniciar sesión</button>
+      </form>
+      <p id="register-message" class="form-note" role="status"></p>
+      <form id="invite-password-form" hidden>
+        <h2>Activa tu cuenta</h2>
+        <p class="portal-switch">Elige una contraseña para acceder a tu espacio privado.</p>
+        <div class="field"><label for="invite-password">Nueva contraseña</label><input id="invite-password" type="password" autocomplete="new-password" minlength="8" required></div>
+        <button class="btn btn-solid" type="submit">Guardar y entrar</button>
+      </form>
+      <p id="invite-message" class="form-note" role="status"></p>
+    </section>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="portal.js"></script>
+<script>
+const loginForm = document.querySelector('#login-form');
+const registerForm = document.querySelector('#register-form');
+const loginMessage = document.querySelector('#login-message');
+const registerMessage = document.querySelector('#register-message');
+const inviteForm = document.querySelector('#invite-password-form');
+const inviteMessage = document.querySelector('#invite-message');
+
+function showRegistration(show) {
+  loginForm.hidden = show;
+  document.querySelector('.portal-switch').hidden = show;
+  registerForm.hidden = !show;
+}
+function showInvitation() {
+  loginForm.hidden = true;
+  registerForm.hidden = true;
+  document.querySelector('.portal-switch').hidden = true;
+  inviteForm.hidden = false;
+}
+document.querySelector('#show-register').addEventListener('click', () => showRegistration(true));
+document.querySelector('#show-login').addEventListener('click', () => showRegistration(false));
+
+async function redirectUser(user) {
+  const profile = await mdPortal.profile(user.id);
+  window.location.replace(profile.role === 'admin' ? 'administracion.html' : profile.destination_url);
+}
+
+loginForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!mdPortal.configured) return mdPortal.message(loginMessage, 'Configura primero Supabase.', true);
+  mdPortal.message(loginMessage, 'Comprobando acceso…');
+  const { data, error } = await mdPortal.client.auth.signInWithPassword({
+    email: document.querySelector('#login-email').value,
+    password: document.querySelector('#login-password').value
+  });
+  if (error) return mdPortal.message(loginMessage, 'No se ha podido iniciar sesión. Revisa tus datos.', true);
+  try { await redirectUser(data.user); } catch (error) { mdPortal.message(loginMessage, error.message, true); }
+});
+
+registerForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!mdPortal.configured) return mdPortal.message(registerMessage, 'Configura primero Supabase.', true);
+  const { error } = await mdPortal.client.auth.signUp({
+    email: document.querySelector('#register-email').value,
+    password: document.querySelector('#register-password').value,
+    options: { data: { display_name: document.querySelector('#register-name').value } }
+  });
+  mdPortal.message(registerMessage, error ? error.message : 'Revisa tu correo para confirmar la cuenta. Un administrador te asignará tu espacio.', Boolean(error));
+});
+
+inviteForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  await mdPortal.client.auth.getSession();
+  const { data, error } = await mdPortal.client.auth.updateUser({ password: document.querySelector('#invite-password').value });
+  if (error) return mdPortal.message(inviteMessage, error.message, true);
+  window.history.replaceState({}, document.title, 'acceso.html');
+  redirectUser(data.user);
+});
+
+(async () => {
+  if (!mdPortal.configured) return mdPortal.message(loginMessage, 'El acceso privado se está configurando. Vuelve a intentarlo en breve.', true);
+  if (window.location.hash.includes('type=invite')) return showInvitation();
+  const { data: { user } } = await mdPortal.client.auth.getUser();
+  if (user) redirectUser(user);
+})();
+</script>
+</body>
+</html>
